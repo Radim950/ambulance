@@ -1149,26 +1149,55 @@ async function handle(a,d={}){
    ASYNC HANDLERS
 ════════════════════════════ */
 async function doLogin(){
-  S.loginLoading=true;S.loginErr="";render();
-  try{
-    if(S.loginTab==="admin"){
-      const pin=document.getElementById("l-pin")?.value||"";
-      if(pin===ADMIN_PIN)S.role="admin";
-      else S.loginErr="Nesprávný PIN";
-    }else{
-      const user=(document.getElementById("l-user")?.value||"").trim();
-      const pin=document.getElementById("l-pin")?.value||"";
-      if(!user||!pin){S.loginErr="Zadejte uživatelské jméno a PIN";S.loginLoading=false;render();return;}
-      const snap=await getDoc(doc(db,"patients",user));
-      if(!snap.exists()){S.loginErr="Pacient nenalezen";S.loginLoading=false;render();return;}
-      const data=snap.data();
-      if(data.pinHash!==hashPin(pin)){S.loginErr="Nesprávný PIN";S.loginLoading=false;render();return;}
-      S.role="patient";S.patientId=user;S.patientData={...data,id:user};
-    }
-  }catch(e){S.loginErr="Chyba: "+e.message;}
-  S.loginLoading=false;render();
-}
+  const user = (document.getElementById("l-user")?.value || "").trim();
+  const pin = (document.getElementById("l-pin")?.value || "").trim();
 
+  S.loginLoading = true;
+  S.loginErr = "";
+  render();
+
+  try{
+    if(S.loginTab === "admin"){
+      if(pin === ADMIN_PIN){
+        S.role = "admin";
+      }else{
+        S.loginErr = "Nesprávný PIN";
+      }
+    }else{
+      if(!user || !pin){
+        S.loginErr = "Zadejte uživatelské jméno a PIN";
+        S.loginLoading = false;
+        render();
+        return;
+      }
+
+      const snap = await getDoc(doc(db,"patients",user));
+      if(!snap.exists()){
+        S.loginErr = "Pacient nenalezen";
+        S.loginLoading = false;
+        render();
+        return;
+      }
+
+      const data = snap.data();
+      if(data.pinHash !== hashPin(pin)){
+        S.loginErr = "Nesprávný PIN";
+        S.loginLoading = false;
+        render();
+        return;
+      }
+
+      S.role = "patient";
+      S.patientId = user;
+      S.patientData = {...data,id:user};
+    }
+  }catch(e){
+    S.loginErr = "Chyba: " + e.message;
+  }
+
+  S.loginLoading = false;
+  render();
+}
 async function doBookConfirm(){
   const reason=document.getElementById("b-reason")?.value?.trim()||"";
   S.bookReason=reason;
