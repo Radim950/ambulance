@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#1c2b3a"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>Ordinační systém</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#f0f4f8;--white:#fff;--ink:#1c2b3a;--ink2:#5a6a7a;--ink3:#9aaab8;
+  --accent:#1a6e5c;--accent2:#124e42;--accent-light:#e6f4f1;
+  --red:#c0392b;--red-light:#fdf0ef;--orange:#d97706;
+  --border:#dde3ea;
+  --shadow:0 2px 10px rgba(0,0,0,0.08);
+  --shadow-lg:0 8px 32px rgba(0,0,0,0.16);
+  --r:12px;--r-sm:8px;--r-lg:20px;
+  --serif:'DM Serif Display',Georgia,serif;
+  --sans:'DM Sans',system-ui,sans-serif;
+  --sat:env(safe-area-inset-top,0px);
+  --sab:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{height:100%;-webkit-text-size-adjust:100%;}
+body{height:100%;font-family:var(--sans);color:var(--ink);background:var(--bg);font-size:15px;line-height:1.55;overscroll-behavior:none;}
+button{cursor:pointer;font-family:var(--sans);-webkit-appearance:none;border:none;}
+input,select,textarea{font-family:var(--sans);font-size:16px;color:var(--ink);-webkit-appearance:none;appearance:none;}
+a{color:var(--accent);}
+
+/* ── SHELL ── */
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh;}
+.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+/* ── NAV ── */
+.nav{
+  background:var(--ink);color:#fff;
+  display:flex;align-items:center;gap:12px;
+  flex-shrink:0;padding:0 16px;
+  padding-top:var(--sat);
+  min-height:calc(58px + var(--sat));
+  box-shadow:0 2px 10px rgba(0,0,0,0.3);
+  position:relative;z-index:10;
+}
+.nav-cross{font-size:20px;color:#6ee7d0;flex-shrink:0;}
+.nav-info{flex:1;min-width:0;}
+.nav-title{font-family:var(--serif);font-size:16px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nav-sub{font-size:11px;color:rgba(255,255,255,0.45);margin-top:1px;}
+.nav-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.nav-user{font-size:12px;color:rgba(255,255,255,0.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px;}
+.nav-btn{background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.22);color:#fff;border-radius:var(--r-sm);padding:8px 13px;font-size:12px;font-weight:600;}
+
+/* ── MOBILE BOTTOM TAB BAR ── */
+.bot-nav{display:flex;background:var(--white);border-top:1px solid var(--border);flex-shrink:0;padding-bottom:var(--sab);}
+.bot-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;color:var(--ink2);font-size:11px;font-weight:500;min-height:56px;padding:8px 4px;border-top:2px solid transparent;transition:color .2s,border-color .2s;}
+.bot-tab.active{color:var(--accent);border-top-color:var(--accent);}
+.bot-tab-icon{font-size:21px;line-height:1;}
+
+/* ── DESKTOP SIDEBAR ── */
+.desktop-shell{display:flex;flex:1;overflow:hidden;}
+.sidebar{width:220px;flex-shrink:0;background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 10px;gap:3px;}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:var(--r-sm);background:none;color:var(--ink2);font-size:14px;font-weight:500;text-align:left;transition:all .15s;}
+.sidebar-item:hover{background:var(--accent-light);color:var(--accent);}
+.sidebar-item.active{background:var(--accent);color:#fff;font-weight:600;}
+.sidebar-item-icon{font-size:17px;width:22px;text-align:center;}
+.sidebar-sep{height:1px;background:var(--border);margin:8px 4px;}
+.sidebar-footer{margin-top:auto;padding-top:16px;padding:16px 14px 0;}
+.portal-content{flex:1;overflow-y:auto;padding:36px 44px;}
+
+/* ── ADMIN TABS ── */
+.tabs-bar{background:var(--white);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;scrollbar-width:none;flex-shrink:0;}
+.tabs-bar::-webkit-scrollbar{display:none;}
+.tab{background:none;border:none;border-bottom:2px solid transparent;padding:14px 16px;font-size:13px;font-weight:500;color:var(--ink2);white-space:nowrap;min-height:48px;flex-shrink:0;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;}
+.tab.danger{color:var(--red);}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:var(--r-sm);font-weight:600;transition:background .15s,opacity .15s;border:none;cursor:pointer;font-size:14px;padding:11px 18px;min-height:44px;}
+.btn-lg{font-size:16px;padding:15px 22px;min-height:52px;}
+.btn-sm{font-size:13px;padding:8px 14px;min-height:38px;}
+.btn-xs{font-size:12px;padding:6px 10px;min-height:32px;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:active{background:var(--accent2);}
+.btn-secondary{background:#fff;color:var(--ink);border:1.5px solid var(--border);}
+.btn-secondary:active{background:#f5f5f5;}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-ghost{background:none;color:var(--accent);text-decoration:underline;padding:4px 0;font-size:14px;min-height:0;border:none;}
+.btn-full{width:100%;}
+.btn:disabled{opacity:.4;}
+.icon-btn{background:none;border:1.5px solid var(--border);border-radius:var(--r-sm);width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;color:var(--ink2);flex-shrink:0;}
+.icon-btn.red{color:var(--red);border-color:#f5c0bc;}
+.icon-btn-lg{width:48px;height:48px;font-size:18px;}
+
+/* ── FORMS ── */
+.field{display:flex;flex-direction:column;gap:6px;}
+.field label{font-size:12px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em;}
+.field input,.field select,.field textarea{width:100%;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;outline:none;background:#fff;font-size:16px;transition:border-color .18s;resize:vertical;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);border-width:2px;}
+
+/* ── CARDS ── */
+.card{background:var(--white);border-radius:var(--r);box-shadow:var(--shadow);padding:20px;}
+
+/* ── BADGE ── */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;}
+.badge-green{background:var(--accent-light);color:var(--accent2);}
+.badge-red{background:var(--red-light);color:var(--red);}
+.badge-gray{background:#eef0f3;color:var(--ink2);}
+.badge-orange{background:#fef3c7;color:var(--orange);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:calc(20px + var(--sab));left:50%;transform:translateX(-50%);padding:13px 22px;border-radius:var(--r);font-size:14px;font-weight:600;z-index:4000;box-shadow:var(--shadow-lg);animation:toastIn .28s ease;white-space:nowrap;max-width:calc(100vw - 32px);pointer-events:none;}
+.toast-ok{background:#134e3a;color:#fff;}
+.toast-warn{background:#92400e;color:#fff;}
+.toast-error{background:var(--red);color:#fff;}
+@keyframes toastIn{from{transform:translateX(-50%) translateY(14px);opacity:0;}to{transform:translateX(-50%) translateY(0);opacity:1;}}
+
+/* ── MODAL: slides up on mobile, centered on desktop ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.48);display:flex;align-items:flex-end;justify-content:center;z-index:3000;padding:0;}
+.modal{background:#fff;width:100%;max-width:560px;border-radius:var(--r-lg) var(--r-lg) 0 0;box-shadow:var(--shadow-lg);max-height:92dvh;display:flex;flex-direction:column;animation:modalUp .3s ease;padding-bottom:var(--sab);}
+@keyframes modalUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+/* Desktop overrides applied via .desktop class on wrapper */
+.desktop .overlay{align-items:center;padding:24px;}
+.desktop .modal{border-radius:var(--r-lg);animation:none;max-height:88vh;padding-bottom:0;}
+.modal-hd{display:flex;justify-content:space-between;align-items:center;padding:18px 20px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.modal-hd h3{font-family:var(--serif);font-size:19px;}
+.modal-bd{padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;flex:1;}
+.modal-ft{display:flex;gap:10px;padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0;}
+.modal-ft .btn{flex:1;}
+
+/* ── LOGIN ── */
+.login-page{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:linear-gradient(155deg,#1c2b3a 0%,#1a6e5c 100%);padding:calc(44px + var(--sat)) 20px 32px;}
+.login-box{background:#fff;border-radius:var(--r-lg);padding:36px 28px;width:100%;max-width:400px;box-shadow:var(--shadow-lg);}
+.login-cross{font-size:44px;color:var(--accent);text-align:center;margin-bottom:16px;}
+.login-title{font-family:var(--serif);font-size:26px;text-align:center;margin-bottom:4px;}
+.login-sub{font-size:14px;color:var(--ink2);text-align:center;margin-bottom:22px;}
+.login-tabs{display:flex;border:1.5px solid var(--border);border-radius:var(--r-sm);overflow:hidden;margin-bottom:20px;}
+.login-tab{flex:1;padding:12px;font-size:14px;font-weight:500;background:#fff;color:var(--ink2);min-height:46px;border:none;}
+.login-tab.active{background:var(--accent);color:#fff;}
+.login-fields{display:flex;flex-direction:column;gap:14px;margin-bottom:18px;}
+.login-err{background:var(--red-light);color:var(--red);border-radius:var(--r-sm);padding:11px 14px;font-size:14px;text-align:center;margin-bottom:14px;}
+
+/* ── PORTAL HERO ── */
+.portal-hero{margin-bottom:22px;}
+.portal-h1{font-family:var(--serif);font-size:26px;margin-bottom:3px;}
+.desktop .portal-h1{font-size:32px;}
+.portal-sub-lbl{color:var(--ink2);font-size:14px;}
+
+/* ── STEPS ── */
+.steps{display:flex;align-items:center;margin-bottom:20px;}
+.step-item{display:flex;align-items:center;gap:7px;}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--border);color:var(--ink2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+.step-item.active .step-num{background:var(--accent);color:#fff;}
+.step-item.done .step-num{background:var(--accent2);color:#fff;}
+.step-txt{font-size:12px;color:var(--ink2);font-weight:500;}
+.step-item.active .step-txt{color:var(--ink);font-weight:600;}
+.step-conn{flex:1;height:2px;background:var(--border);margin:0 6px;}
+.step-conn.done{background:var(--accent2);}
+
+/* ── CALENDAR ── */
+.cal-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.cal-month-lbl{font-family:var(--serif);font-size:20px;flex:1;text-align:center;}
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:14px;}
+.month-dow{text-align:center;font-size:11px;font-weight:700;color:var(--ink2);padding:5px 0;text-transform:uppercase;}
+.m-day{aspect-ratio:1;border-radius:50%;border:none;background:none;font-size:15px;font-weight:500;color:var(--ink);display:flex;align-items:center;justify-content:center;width:100%;transition:background .12s;}
+.m-day.avail:hover,.m-day.avail:focus{background:var(--accent-light);color:var(--accent);}
+.m-day.sel{background:var(--accent);color:#fff;font-weight:700;}
+.m-day.past,.m-day.off{color:var(--border);}
+.m-day.off{background:#f5f2ee;}
+.m-day.full{color:var(--orange);}
+
+/* ── SLOTS ── */
+.slots-wrap{background:var(--white);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);margin-bottom:14px;}
+.slots-title{font-weight:600;font-size:15px;margin-bottom:12px;}
+/* Mobile: 2 cols. Desktop gets overridden via JS adding class */
+.slots-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.slots-grid.cols3{grid-template-columns:repeat(3,1fr);}
+.slots-grid.cols4{grid-template-columns:repeat(4,1fr);}
+.slot{padding:14px 8px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:#fff;font-size:16px;font-weight:600;text-align:center;min-height:52px;transition:all .12s;}
+.slot:hover:not(:disabled),.slot:active:not(:disabled){border-color:var(--accent);color:var(--accent);}
+.slot.picked{background:var(--accent);color:#fff;border-color:var(--accent);}
+.slot.taken{background:#f5f5f5;color:#ccc;text-decoration:line-through;}
+.slot.past{color:#ddd;}
+.slots-none{color:var(--ink2);font-size:14px;font-style:italic;grid-column:1/-1;padding:8px 0;}
+
+/* ── APPT CARDS ── */
+.appt-card{background:var(--white);border-radius:var(--r);border-left:4px solid var(--accent);padding:14px 16px;box-shadow:var(--shadow);margin-bottom:10px;}
+.appt-card.cancelled{border-left-color:var(--red);opacity:.75;}
+.appt-card.past{border-left-color:var(--ink3);}
+.appt-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.appt-time{font-family:var(--serif);font-size:24px;font-weight:700;line-height:1;}
+.appt-date{font-size:12px;color:var(--ink2);margin-top:3px;}
+.appt-name-lbl{font-weight:600;font-size:15px;}
+.appt-meta{font-size:13px;color:var(--ink2);margin-top:2px;}
+.appt-reason{font-size:13px;color:var(--ink2);margin-top:6px;font-style:italic;}
+.appt-footer{display:flex;justify-content:flex-end;align-items:center;margin-top:12px;gap:8px;flex-wrap:wrap;}
+
+/* ── FILTER PILLS ── */
+.filter-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none;}
+.filter-row::-webkit-scrollbar{display:none;}
+.fpill{background:#fff;border:1.5px solid var(--border);border-radius:20px;padding:7px 16px;font-size:13px;font-weight:500;color:var(--ink2);white-space:nowrap;min-height:36px;flex-shrink:0;}
+.fpill.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.empty-state{text-align:center;padding:56px 20px;color:var(--ink2);font-size:15px;}
+
+/* ── WEEK GRID ── */
+.wk-nav{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.wk-range{font-weight:600;font-size:14px;flex:1;}
+.week-grid{background:var(--white);border-radius:var(--r);overflow:auto;-webkit-overflow-scrolling:touch;box-shadow:var(--shadow);border:1px solid var(--border);}
+.wg-table{display:grid;grid-template-columns:40px repeat(7,minmax(88px,1fr));min-width:680px;}
+.wg-corner{background:#f7f8fa;border-right:1px solid var(--border);border-bottom:1px solid var(--border);}
+.wg-dh{text-align:center;padding:10px 4px;background:#f7f8fa;border-right:1px solid var(--border);border-bottom:1px solid var(--border);}
+.wg-dh.today{background:var(--accent-light);}
+.wg-dh.nowork{background:#f0ede8;}
+.wg-dow{font-size:10px;font-weight:700;color:var(--ink2);text-transform:uppercase;}
+.wg-dn{font-size:17px;font-weight:700;}
+.wg-dh.today .wg-dn{color:var(--accent);}
+.wg-hr{font-size:10px;color:var(--ink3);padding:6px 4px 0;text-align:right;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:#fafafa;}
+.wg-cell{border-right:1px solid var(--border);border-bottom:1px solid var(--border);min-height:50px;padding:3px;cursor:pointer;transition:background .12s;}
+.wg-cell:hover:not(.nowork){background:var(--accent-light);}
+.wg-cell.nowork{background:#f5f2ee;cursor:default;}
+.cal-ev{background:var(--accent);color:#fff;border-radius:5px;padding:4px 7px;font-size:11px;cursor:pointer;margin-bottom:2px;}
+.cal-ev:hover{opacity:.85;}
+.cal-ev.cancelled{background:var(--red);opacity:.65;}
+.cal-ev-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cal-ev-time{opacity:.8;font-size:10px;}
+
+/* ── ADMIN LIST / PATIENTS ── */
+.list-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+.patient-row{background:var(--white);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.p-avatar{width:42px;height:42px;border-radius:50%;background:var(--accent-light);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;}
+.p-name{font-weight:600;font-size:15px;}
+.p-meta{font-size:12px;color:var(--ink2);margin-top:2px;}
+.p-acts{margin-left:auto;display:flex;gap:6px;flex-shrink:0;}
+
+/* ── SETTINGS ── */
+.s-grid{display:flex;flex-direction:column;gap:14px;max-width:700px;}
+.s-card{background:var(--white);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);}
+.s-title{font-family:var(--serif);font-size:17px;margin-bottom:14px;}
+.s-row{display:flex;flex-direction:column;gap:12px;}
+.s-row-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.day-row{display:flex;gap:8px;flex-wrap:wrap;}
+.day-btn{padding:10px 14px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:14px;font-weight:500;min-height:44px;}
+.day-btn.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+.blocked-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.chip{display:flex;align-items:center;gap:6px;background:var(--bg);border-radius:20px;padding:6px 12px;font-size:13px;}
+.chip button{background:none;border:none;cursor:pointer;color:var(--red);font-size:16px;padding:0;line-height:1;}
+.add-row{display:flex;gap:8px;align-items:center;}
+.add-row input{flex:1;border:1.5px solid var(--border);border-radius:var(--r-sm);padding:11px 12px;outline:none;font-family:var(--sans);font-size:16px;background:#fff;}
+.add-row input:focus{border-color:var(--accent);}
+.search-input{border:1.5px solid var(--border);border-radius:var(--r-sm);padding:10px 14px;font-family:var(--sans);font-size:15px;outline:none;background:#fff;width:100%;max-width:280px;}
+.search-input:focus{border-color:var(--accent);}
+.info-box{background:var(--accent-light);border-radius:var(--r-sm);padding:12px 14px;font-size:13px;color:var(--accent2);}
+.muted{color:var(--ink2);font-size:13px;}
+.mt8{margin-top:8px;}.mt12{margin-top:12px;}.mt16{margin-top:16px;}
+.ml8{margin-left:8px;}
+.divider{border:none;border-top:1px solid var(--border);margin:14px 0;}
+</style>
+</head>
+<body>
+<div id="root">
+  <div style="display:flex;align-items:center;justify-content:center;height:100dvh;font-family:'DM Sans',sans-serif;color:#5a6a7a;font-size:15px;">Načítání…</div>
+</div>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getFirestore,collection,addDoc,doc,updateDoc,deleteDoc,onSnapshot,query,orderBy,setDoc,getDoc,Timestamp}
+  from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* ════════════════════════════
+   🔧 FIREBASE CONFIG
+   Replace with your values from:
+   Firebase Console → Project Settings → Your apps → </>
+════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDqojhmvnTViJmS55ohZ0ySeIowyAq7KzU",
+  authDomain: "ordinace-mn.firebaseapp.com",
+  projectId: "ordinace-mn",
+  storageBucket: "ordinace-mn.firebasestorage.app",
+  messagingSenderId: "411447908518",
+  appId: "1:411447908518:web:cf4e51f02f6f24cd327c67",
+  measurementId: "G-CSVJETPSNR"
+};
+/* ════════════════════════════
+   🔧 ADMIN PIN — change before deploying
+════════════════════════════ */
+const ADMIN_PIN="3850";
+
+const fbApp=initializeApp(FB);
+const db=getFirestore(fbApp);
+
+/* ════════════════════════════
+   DEVICE DETECTION
+   isMobile = true  → phone/tablet layout
+   isMobile = false → desktop layout
+   Detects by touch capability + viewport width.
+   Re-runs on resize so rotating a tablet works.
+════════════════════════════ */
+let isMobile=computeIsMobile();
+function computeIsMobile(){
+  const touch=window.matchMedia("(pointer:coarse)").matches;
+  const narrow=window.innerWidth<720;
+  return touch||narrow;
+}
+window.addEventListener("resize",()=>{
+  const prev=isMobile;
+  isMobile=computeIsMobile();
+  if(prev!==isMobile) render();
+},{passive:true});
+
+/* ════════════════════════════
+   HELPERS
+════════════════════════════ */
+const pad=n=>String(n).padStart(2,"0");
+const fmt=d=>d?`${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`:"";
+const fmtT=d=>d?`${pad(d.getHours())}:${pad(d.getMinutes())}`:"";
+const dayNames=["Ne","Po","Út","St","Čt","Pá","So"];
+const dayFull=["Neděle","Pondělí","Úterý","Středa","Čtvrtek","Pátek","Sobota"];
+const monthNames=["Leden","Únor","Březen","Duben","Květen","Červen","Červenec","Srpen","Září","Říjen","Listopad","Prosinec"];
+const dateKey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseKey=k=>{const[y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d);};
+const addMin=(d,m)=>new Date(d.getTime()+m*60000);
+const sameDay=(a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+function hashPin(p){let h=0;for(let i=0;i<p.length;i++){h=(Math.imul(31,h)+p.charCodeAt(i))|0;}return h.toString(16);}
+
+/* ════════════════════════════
+   STATE
+════════════════════════════ */
+let S={
+  role:null,patientId:null,patientData:null,
+  loginTab:"patient",loginErr:"",loginLoading:false,
+  appointments:[],patients:[],
+  settings:{
+    doctorName:"MUDr. Jan Novák",
+    slotMinutes:60,
+    workDays:[1,2,3,4,5],
+    workStart:"08:00",workEnd:"17:00",
+    breakStart:"12:00",breakEnd:"13:00",
+    blockedDates:[],
+    minChangHours:24,
+  },
+  adminTab:"calendar",calOffset:0,
+  listFilter:"upcoming",patSearch:"",
+  portalTab:"book",
+  bookStep:1,bookMonthOff:0,
+  bookDate:null,bookTime:null,bookReason:"",
+  histFilter:"upcoming",
+  rescheduleId:null,
+  modal:null,toast:null,
+};
+
+/* ════════════════════════════
+   FIREBASE
+════════════════════════════ */
+async function loadSettings(){
+  try{const s=await getDoc(doc(db,"settings","main"));if(s.exists())S.settings={...S.settings,...s.data()};}catch(e){}
+}
+async function saveSettings(){
+  try{await setDoc(doc(db,"settings","main"),S.settings);toast("Nastavení uloženo ✓","ok");}
+  catch(e){toast("Chyba: "+e.message,"error");}
+}
+function subscribeAppointments(){
+  onSnapshot(query(collection(db,"appointments"),orderBy("start")),snap=>{
+    S.appointments=snap.docs.map(d=>{
+      const x=d.data();
+      return{id:d.id,...x,start:x.start instanceof Timestamp?x.start.toDate():new Date(x.start)};
+    });render();
+  },e=>console.warn(e));
+}
+function subscribePatients(){
+  onSnapshot(collection(db,"patients"),snap=>{
+    S.patients=snap.docs.map(d=>({id:d.id,...d.data()}));render();
+  },e=>console.warn(e));
+}
+async function addAppt(data){
+  try{await addDoc(collection(db,"appointments"),{...data,start:Timestamp.fromDate(data.start)});toast("Objednávka vytvořena ✓","ok");}
+  catch(e){toast("Chyba: "+e.message,"error");}
+}
+async function updateAppt(id,data){
+  const u={...data};if(u.start instanceof Date)u.start=Timestamp.fromDate(u.start);
+  try{await updateDoc(doc(db,"appointments",id),u);toast("Uloženo ✓","ok");}
+  catch(e){toast("Chyba: "+e.message,"error");}
+}
+async function deleteAppt(id){
+  try{await deleteDoc(doc(db,"appointments",id));toast("Smazáno","ok");}
+  catch(e){toast("Chyba: "+e.message,"error");}
+}
+async function addPatient(data){
+  try{
+    await setDoc(doc(db,"patients",data.username),{...data,pinHash:hashPin(data.pin),pin:undefined});
+    toast("Pacient přidán ✓","ok");return true;
+  }catch(e){toast("Chyba: "+e.message,"error");return false;}
+}
+async function updatePatient(id,data){
+  try{
+    const u={...data};if(u.pin){u.pinHash=hashPin(u.pin);delete u.pin;}
+    await updateDoc(doc(db,"patients",id),u);toast("Uloženo ✓","ok");
+  }catch(e){toast("Chyba: "+e.message,"error");}
+}
+async function deletePatient(id){
+  try{await deleteDoc(doc(db,"patients",id));toast("Smazáno","ok");}
+  catch(e){toast("Chyba: "+e.message,"error");}
+}
+
+/* ════════════════════════════
+   SLOT LOGIC
+════════════════════════════ */
+function getSlots(date,excludeId=null){
+  const s=S.settings;
+  if(!s.workDays.includes(date.getDay()))return[];
+  if((s.blockedDates||[]).includes(dateKey(date)))return[];
+  const[sh,sm]=s.workStart.split(":").map(Number);
+  const[eh,em]=s.workEnd.split(":").map(Number);
+  const[bsh,bsm]=s.breakStart.split(":").map(Number);
+  const[beh]=s.breakEnd.split(":").map(Number);
+  let cur=new Date(date);cur.setHours(sh,sm,0,0);
+  const end=new Date(date);end.setHours(eh,em,0,0);
+  const bS=new Date(date);bS.setHours(bsh,bsm,0,0);
+  const bE=new Date(date);bE.setHours(beh,parseInt(s.breakEnd.split(":")[1]),0,0);
+  const slots=[];
+  while(true){
+    const slotEnd=addMin(cur,s.slotMinutes);
+    if(slotEnd>end)break;
+    if(cur>=bS&&cur<bE){cur=new Date(bE);continue;}
+    if(cur<bS&&slotEnd>bS){cur=new Date(bS);continue;}
+    const taken=S.appointments.some(a=>
+      a.status!=="cancelled"&&a.id!==excludeId&&sameDay(a.start,cur)&&
+      a.start.getTime()<slotEnd.getTime()&&
+      addMin(a.start,a.duration||s.slotMinutes).getTime()>cur.getTime()
+    );
+    slots.push({time:new Date(cur),taken});
+    cur=addMin(cur,s.slotMinutes);
+  }
+  return slots;
+}
+function isWorkDay(d){
+  return S.settings.workDays.includes(d.getDay())&&!(S.settings.blockedDates||[]).includes(dateKey(d));
+}
+function canChange(appt){
+  return(appt.start.getTime()-Date.now())>(S.settings.minChangHours||24)*3600000;
+}
+
+/* ════════════════════════════
+   TOAST
+════════════════════════════ */
+function toast(msg,type="ok"){
+  S.toast={msg,type};render();
+  setTimeout(()=>{S.toast=null;render();},3500);
+}
+
+/* ════════════════════════════
+   RENDER
+════════════════════════════ */
+let _bound=false;
+function render(){
+  const root=document.getElementById("root");
+  root.innerHTML=buildApp();
+  if(!_bound){
+    _bound=true;
+    root.addEventListener("click",onClick);
+    root.addEventListener("input",onInput);
+    root.addEventListener("keydown",onKey);
+  }
+}
+
+/* ════════════════════════════
+   APP SHELL
+════════════════════════════ */
+function buildApp(){
+  if(!S.role)return buildLogin();
+  const cls=isMobile?"":"desktop";
+  if(S.role==="admin")return`
+    <div class="app ${cls}">
+      ${buildNav()}
+      ${buildAdmin()}
+      ${S.modal?buildModal():""}
+      ${S.toast?`<div class="toast toast-${S.toast.type}">${esc(S.toast.msg)}</div>`:""}
+    </div>`;
+  return`
+    <div class="app ${cls}">
+      ${buildNav()}
+      ${isMobile?buildPatientMobile():buildPatientDesktop()}
+      ${S.modal?buildModal():""}
+      ${S.toast?`<div class="toast toast-${S.toast.type}">${esc(S.toast.msg)}</div>`:""}
+    </div>`;
+}
+
+/* ════════════════════════════
+   LOGIN
+════════════════════════════ */
+function buildLogin(){
+  return`
+  <div class="login-page">
+    <div class="login-box">
+      <div class="login-cross">✚</div>
+      <h1 class="login-title">${esc(S.settings.doctorName||"Ordinační systém")}</h1>
+      <p class="login-sub">Přihlaste se ke svému účtu</p>
+      <div class="login-tabs">
+        <button class="login-tab ${S.loginTab==="patient"?"active":""}" data-a="ltab" data-v="patient">Pacient</button>
+        <button class="login-tab ${S.loginTab==="admin"?"active":""}" data-a="ltab" data-v="admin">Správce / Lékař</button>
+      </div>
+      ${S.loginErr?`<div class="login-err">${esc(S.loginErr)}</div>`:""}
+      <div class="login-fields">
+        ${S.loginTab==="patient"?`
+          <div class="field"><label>Příjmení</label>
+            <input id="l-user" type="text" placeholder="Novák" autocomplete="username"/></div>
+          <div class="field"><label>PIN</label>
+            <input id="l-pin" type="password" placeholder="••••" maxlength="8" autocomplete="current-password"/></div>
+        `:`
+          <div class="field"><label>Administrátorský PIN</label>
+            <input id="l-pin" type="password" placeholder="••••" maxlength="8" autocomplete="current-password"/></div>
+        `}
+      </div>
+      <button class="btn btn-primary btn-full btn-lg" data-a="login" ${S.loginLoading?"disabled":""}>
+        ${S.loginLoading?"Přihlašování…":"Přihlásit se"}
+      </button>
+    </div>
+  </div>`;
+}
+
+/* ════════════════════════════
+   NAV BAR
+════════════════════════════ */
+function buildNav(){
+  const name=S.role==="admin"?"Správce":S.patientData?.name||"Pacient";
+  return`
+  <nav class="nav">
+    <span class="nav-cross">✚</span>
+    <div class="nav-info">
+      <div class="nav-title">${esc(S.settings.doctorName)}</div>
+      <div class="nav-sub">${S.role==="admin"?"Administrátor":"Pacientský portál"}</div>
+    </div>
+    <div class="nav-right">
+      <span class="nav-user">${esc(name)}</span>
+      <button class="nav-btn" data-a="logout">Odhlásit</button>
+    </div>
+  </nav>`;
+}
+
+/* ════════════════════════════
+   PATIENT — MOBILE
+   One full-screen section at a time.
+   Navigation via sticky bottom bar.
+════════════════════════════ */
+function buildPatientMobile(){
+  return`
+  <div class="main">
+    <div style="padding:20px 16px 28px;">
+      <div class="portal-hero">
+        <h1 class="portal-h1">Dobrý den,<br>${esc(S.patientData?.name||"")}</h1>
+        <p class="portal-sub-lbl">${esc(S.settings.doctorName)}</p>
+      </div>
+      ${S.portalTab==="book"?buildPatientBook():buildPatientHistory()}
+    </div>
+  </div>
+  <nav class="bot-nav">
+    <button class="bot-tab ${S.portalTab==="book"?"active":""}" data-a="ptab" data-v="book">
+      <span class="bot-tab-icon">📅</span>Objednat se
+    </button>
+    <button class="bot-tab ${S.portalTab==="history"?"active":""}" data-a="ptab" data-v="history">
+      <span class="bot-tab-icon">📋</span>Moje termíny
+    </button>
+  </nav>`;
+}
+
+/* ════════════════════════════
+   PATIENT — DESKTOP
+   Persistent sidebar + scrollable content pane.
+════════════════════════════ */
+function buildPatientDesktop(){
+  return`
+  <div class="desktop-shell">
+    <aside class="sidebar">
+      <button class="sidebar-item ${S.portalTab==="book"?"active":""}" data-a="ptab" data-v="book">
+        <span class="sidebar-item-icon">📅</span> Objednat se
+      </button>
+      <button class="sidebar-item ${S.portalTab==="history"?"active":""}" data-a="ptab" data-v="history">
+        <span class="sidebar-item-icon">📋</span> Moje objednávky
+      </button>
+      <div class="sidebar-sep"></div>
+      <div class="sidebar-footer">
+        <div style="font-size:12px;color:var(--ink2);line-height:1.6;">
+          Přihlášen/a jako<br><strong>${esc(S.patientData?.name||"")}</strong>
+        </div>
+      </div>
+    </aside>
+    <div class="portal-content">
+      <div class="portal-hero">
+        <h1 class="portal-h1">Dobrý den, ${esc(S.patientData?.name||"")}</h1>
+        <p class="portal-sub-lbl">${esc(S.settings.doctorName)}</p>
+      </div>
+      ${S.portalTab==="book"?buildPatientBook():buildPatientHistory()}
+    </div>
+  </div>`;
+}
+
+/* ════════════════════════════
+   BOOKING FLOW
+════════════════════════════ */
+function buildPatientBook(){
+  const steps=[{n:1,l:"Vyberte termín"},{n:2,l:"Potvrzení"}];
+  return`
+  <div class="steps">
+    ${steps.map((s,i)=>`
+      <div class="step-item ${S.bookStep===s.n?"active":S.bookStep>s.n?"done":""}">
+        <div class="step-num">${S.bookStep>s.n?"✓":s.n}</div>
+        <div class="step-txt">${s.l}</div>
+      </div>
+      ${i<steps.length-1?`<div class="step-conn ${S.bookStep>s.n?"done":""}"></div>`:""}`).join("")}
+  </div>
+  ${S.bookStep===1?buildBookStep1():buildBookStep2()}`;
+}
+
+function buildBookStep1(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const mo=S.bookMonthOff;
+  const ref=new Date(today.getFullYear(),today.getMonth()+mo,1);
+  const yr=ref.getFullYear(),mn=ref.getMonth();
+  const first=new Date(yr,mn,1),last=new Date(yr,mn+1,0);
+  let sdow=first.getDay();if(sdow===0)sdow=7;
+  const cells=[];
+  for(let i=1;i<sdow;i++)cells.push(null);
+  for(let d=1;d<=last.getDate();d++)cells.push(new Date(yr,mn,d));
+  const excl=S.rescheduleId||null;
+  // Slot column count: 2 on mobile, 3 on tablet, 4 on wide desktop
+  const slotCols=isMobile?"":window.innerWidth>=1024?"cols4":"cols3";
+
+  let slotsHtml="";
+  if(S.bookDate){
+    const slots=getSlots(S.bookDate,excl);
+    const now=new Date();
+    slotsHtml=`
+    <div class="slots-wrap">
+      <div class="slots-title">${dayFull[S.bookDate.getDay()]} ${fmt(S.bookDate)}</div>
+      <div class="slots-grid ${slotCols}">
+        ${slots.length===0?`<span class="slots-none">Žádné volné termíny tento den</span>`:""}
+        ${slots.map(sl=>{
+          const past=sl.time<=now;
+          const picked=S.bookTime&&sl.time.getTime()===S.bookTime.getTime();
+          return`<button class="slot ${sl.taken?"taken":past?"past":picked?"picked":""}"
+            data-a="${sl.taken||past?"":"pick-slot"}" data-ts="${sl.time.getTime()}"
+            ${sl.taken||past?"disabled":""}>${fmtT(sl.time)}</button>`;
+        }).join("")}
+      </div>
+      ${S.bookTime?`<button class="btn btn-primary btn-full ${isMobile?"btn-lg":""} mt16"
+        data-a="book-next">Pokračovat →</button>`:""}
+    </div>`;
+  }
+
+  return`
+  <div class="card" style="margin-bottom:14px;">
+    ${S.rescheduleId?`
+      <div class="info-box" style="margin-bottom:14px;">
+        ↔ Přesunujete objednávku — vyberte nový termín
+        <button class="btn btn-ghost" style="margin-left:8px;" data-a="cancel-reschedule">Zrušit</button>
+      </div>`:""}
+    <div class="cal-nav">
+      <button class="icon-btn ${isMobile?"icon-btn-lg":""}" data-a="bmo-prev" ${mo<=0?"disabled":""}>‹</button>
+      <span class="cal-month-lbl">${monthNames[mn]} ${yr}</span>
+      <button class="icon-btn ${isMobile?"icon-btn-lg":""}" data-a="bmo-next">›</button>
+    </div>
+    <div class="month-grid">
+      ${["Po","Út","St","Čt","Pá","So","Ne"].map(d=>`<div class="month-dow">${d}</div>`).join("")}
+      ${cells.map(d=>{
+        if(!d)return`<div></div>`;
+        const past=d<today,work=isWorkDay(d),sel=S.bookDate&&sameDay(d,S.bookDate);
+        const slots=work&&!past?getSlots(d,excl):[];
+        const full=work&&!past&&slots.length>0&&slots.every(s=>s.taken);
+        const cls=past?"past":!work?"off":sel?"sel":full?"full":"avail";
+        return`<button class="m-day ${cls}"
+          data-a="${past||!work?"":"pick-bdate"}" data-date="${d.getTime()}"
+          ${past||!work?"disabled":""}
+          title="${full?"Plně obsazeno":""}">${d.getDate()}</button>`;
+      }).join("")}
+    </div>
+  </div>
+  ${slotsHtml}`;
+}
+
+function buildBookStep2(){
+  return`
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px;">
+      <div>
+        <div style="font-size:${isMobile?"17px":"16px"};font-weight:600;">
+          📅 ${dayFull[S.bookDate.getDay()]} ${fmt(S.bookDate)} v ${fmtT(S.bookTime)}
+        </div>
+        <div style="font-size:13px;color:var(--ink2);margin-top:4px;">
+          Délka: ${S.settings.slotMinutes} min · ${esc(S.settings.doctorName)}
+        </div>
+      </div>
+      <button class="btn btn-ghost" data-a="book-back" style="flex-shrink:0;">← Změnit</button>
+    </div>
+    <div class="field">
+      <label>Důvod návštěvy (nepovinné)</label>
+      <textarea id="b-reason" rows="${isMobile?3:4}"
+        placeholder="Stručně popište důvod návštěvy…">${esc(S.bookReason||"")}</textarea>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:18px;">
+      <button class="btn btn-primary btn-full ${isMobile?"btn-lg":""}" data-a="book-confirm">
+        ${S.rescheduleId?"↔ Přesunout objednávku":"✓ Potvrdit objednávku"}
+      </button>
+      <button class="btn btn-secondary btn-full" data-a="book-back">← Zpět na výběr termínu</button>
+    </div>
+  </div>`;
+}
+
+/* ════════════════════════════
+   PATIENT HISTORY
+════════════════════════════ */
+function buildPatientHistory(){
+  const now=new Date();
+  const all=S.appointments.filter(a=>a.patientId===S.patientId);
+  const flt=S.histFilter;
+  const list=flt==="upcoming"?all.filter(a=>a.start>=now&&a.status!=="cancelled").sort((a,b)=>a.start-b.start)
+    :flt==="past"?all.filter(a=>a.start<now&&a.status!=="cancelled").sort((a,b)=>b.start-a.start)
+    :flt==="cancelled"?all.filter(a=>a.status==="cancelled").sort((a,b)=>b.start-a.start)
+    :all.sort((a,b)=>b.start-a.start);
+
+  return`
+  <div class="filter-row">
+    ${[["upcoming","Nadcházející"],["past","Minulé"],["cancelled","Zrušené"],["all","Vše"]].map(([v,l])=>
+      `<button class="fpill ${flt===v?"active":""}" data-a="hfilt" data-v="${v}">${l}</button>`
+    ).join("")}
+  </div>
+  ${list.length===0?`<div class="empty-state">Žádné objednávky v této kategorii</div>`:""}
+  ${list.map(a=>{
+    const future=a.start>=now&&a.status!=="cancelled";
+    const ok=future&&canChange(a);
+    const locked=future&&!ok;
+    return`
+    <div class="appt-card ${a.status==="cancelled"?"cancelled":a.start<now?"past":""}">
+      <div class="appt-card-top">
+        <div>
+          <div class="appt-time">${fmtT(a.start)}</div>
+          <div class="appt-date">${dayFull[a.start.getDay()]} ${fmt(a.start)}</div>
+        </div>
+        <div>${
+          a.status==="cancelled"?`<span class="badge badge-red">Zrušeno</span>`
+          :a.start<now?`<span class="badge badge-gray">Proběhlo</span>`
+          :`<span class="badge badge-green">Potvrzeno</span>`
+        }</div>
+      </div>
+      ${a.reason?`<div class="appt-reason">${esc(a.reason)}</div>`:""}
+      ${locked?`<div style="font-size:12px;color:var(--orange);margin-top:8px;">
+        ⏰ Změny uzamčeny — méně než ${S.settings.minChangHours}h do termínu</div>`:""}
+      ${ok?`
+      <div class="appt-footer">
+        <button class="btn btn-secondary ${isMobile?"":"btn-sm"}" data-a="reschedule" data-id="${a.id}">↔ Přesunout</button>
+        <button class="btn btn-danger ${isMobile?"":"btn-sm"}" data-a="pat-cancel" data-id="${a.id}">Zrušit</button>
+      </div>`:""}
+    </div>`;
+  }).join("")}`;
+}
+
+/* ════════════════════════════
+   ADMIN
+════════════════════════════ */
+function buildAdmin(){
+  const t=S.adminTab;
+  return`
+  <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+    <div class="tabs-bar">
+      ${[["calendar","📅 Kalendář"],["list","📋 Objednávky"],["patients","👥 Pacienti"],["settings","⚙ Nastavení"]].map(([v,l])=>
+        `<button class="tab ${t===v?"active":""}" data-a="atab" data-v="${v}">${l}</button>`
+      ).join("")}
+      <button class="tab danger" style="margin-left:auto;" data-a="logout">Odhlásit</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:${isMobile?"14px 14px":"20px 28px"};">
+      ${t==="calendar"?buildAdminCal()
+        :t==="list"?buildAdminList()
+        :t==="patients"?buildAdminPatients()
+        :buildAdminSettings()}
+    </div>
+  </div>`;
+}
+
+function buildAdminCal(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const mon=new Date(today);
+  const dow=today.getDay()===0?6:today.getDay()-1;
+  mon.setDate(today.getDate()-dow+S.calOffset*7);
+  const days=Array.from({length:7},(_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
+  const s=S.settings;
+  const[sh]=s.workStart.split(":").map(Number);
+  const[eh,em]=s.workEnd.split(":").map(Number);
+  const endH=eh+(em>0?1:0);
+  const hours=Array.from({length:endH-sh+1},(_,i)=>sh+i);
+  const weekAppts=S.appointments.filter(a=>a.status!=="cancelled"&&days.some(d=>sameDay(d,a.start)));
+  return`
+  <div>
+    <div class="wk-nav">
+      <button class="icon-btn" data-a="cal-prev">‹</button>
+      <span class="wk-range">${fmt(days[0])} – ${fmt(days[6])}${S.calOffset===0?" · Tento týden":""}</span>
+      <button class="icon-btn" data-a="cal-next">›</button>
+      <button class="btn btn-secondary btn-sm ml8" data-a="cal-today">Dnes</button>
+      <button class="btn btn-primary btn-sm ml8" data-a="open-adm-appt">+ Přidat</button>
+    </div>
+    <div class="week-grid">
+      <div class="wg-table">
+        <div class="wg-corner"></div>
+        ${days.map(d=>`
+          <div class="wg-dh ${sameDay(d,today)?"today":""} ${isWorkDay(d)?"":"nowork"}">
+            <div class="wg-dow">${dayNames[d.getDay()]}</div>
+            <div class="wg-dn">${d.getDate()}</div>
+          </div>`).join("")}
+        ${hours.map(h=>`
+          <div class="wg-hr">${pad(h)}:00</div>
+          ${days.map(d=>{
+            const work=isWorkDay(d);
+            const ts=new Date(d);ts.setHours(h,0,0,0);
+            const appts=weekAppts.filter(a=>sameDay(a.start,d)&&a.start.getHours()===h);
+            return`<div class="wg-cell ${work?"":"nowork"}"
+              data-a="${work?"cell":""}" data-ts="${ts.getTime()}">
+              ${appts.map(a=>`
+                <div class="cal-ev ${a.status==="cancelled"?"cancelled":""}"
+                  data-a="open-adm-appt" data-id="${a.id}">
+                  <div class="cal-ev-name">${esc(a.name||"")}</div>
+                  <div class="cal-ev-time">${fmtT(a.start)}</div>
+                </div>`).join("")}
+            </div>`;
+          }).join("")}
+        `).join("")}
+      </div>
+    </div>
+  </div>`;
+}
+
+function buildAdminList(){
+  const now=new Date();
+  const flt=S.listFilter;
+  let list=[...S.appointments];
+  if(flt==="upcoming")list=list.filter(a=>a.start>=now&&a.status!=="cancelled");
+  else if(flt==="today")list=list.filter(a=>sameDay(a.start,now)&&a.status!=="cancelled");
+  else if(flt==="past")list=list.filter(a=>a.start<now&&a.status!=="cancelled");
+  else if(flt==="cancelled")list=list.filter(a=>a.status==="cancelled");
+  list.sort((a,b)=>flt==="past"?b.start-a.start:a.start-b.start);
+  return`
+  <div>
+    <div class="list-toolbar">
+      <div class="filter-row" style="margin-bottom:0;">
+        ${[["upcoming","Nadcházející"],["today","Dnes"],["past","Minulé"],["cancelled","Zrušené"]].map(([v,l])=>
+          `<button class="fpill ${flt===v?"active":""}" data-a="lfilt" data-v="${v}">${l}</button>`
+        ).join("")}
+      </div>
+      <button class="btn btn-primary btn-sm" data-a="open-adm-appt">+ Přidat</button>
+    </div>
+    ${list.length===0?`<div class="empty-state">Žádné objednávky</div>`:""}
+    ${list.map(a=>`
+      <div class="appt-card ${a.status==="cancelled"?"cancelled":""}">
+        <div class="appt-card-top">
+          <div>
+            <div class="appt-time">${fmtT(a.start)}</div>
+            <div class="appt-date">${fmt(a.start)} · ${a.duration||S.settings.slotMinutes} min</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="icon-btn" data-a="open-adm-appt" data-id="${a.id}" title="Upravit">✏</button>
+            ${a.status!=="cancelled"?`<button class="icon-btn red" data-a="adm-cancel" data-id="${a.id}">✕</button>`:""}
+            <button class="icon-btn red" data-a="adm-delete" data-id="${a.id}">🗑</button>
+          </div>
+        </div>
+        <div style="margin-top:8px;">
+          <div class="appt-name-lbl">${esc(a.name||"—")}</div>
+          <div class="appt-meta">${esc(a.phone||"")}${a.email?" · "+esc(a.email):""}</div>
+          ${a.reason?`<div class="appt-reason">${esc(a.reason)}</div>`:""}
+          <div style="margin-top:6px;">${a.status==="cancelled"
+            ?`<span class="badge badge-red">Zrušeno</span>`
+            :`<span class="badge badge-green">Potvrzeno</span>`}</div>
+        </div>
+      </div>`).join("")}
+  </div>`;
+}
+
+function buildAdminPatients(){
+  const q=(S.patSearch||"").toLowerCase();
+  const list=S.patients.filter(p=>!q||
+    p.name?.toLowerCase().includes(q)||p.username?.toLowerCase().includes(q)||p.phone?.includes(q));
+  return`
+  <div>
+    <div class="list-toolbar">
+      <input type="text" class="search-input" id="pat-search"
+        placeholder="Hledat pacienta…" value="${esc(S.patSearch||"")}"/>
+      <button class="btn btn-primary btn-sm" data-a="open-add-patient">+ Nový pacient</button>
+    </div>
+    ${list.length===0?`<div class="empty-state">Žádní pacienti</div>`:""}
+    ${list.map(p=>`
+      <div class="patient-row">
+        <div class="p-avatar">${(p.name||"?")[0].toUpperCase()}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="p-name">${esc(p.name||"—")}</div>
+          <div class="p-meta">@${esc(p.username)}${p.phone?" · "+esc(p.phone):""}${p.email?" · "+esc(p.email):""}</div>
+        </div>
+        <div class="p-acts">
+          <button class="icon-btn" data-a="open-edit-patient" data-id="${p.id}" title="Upravit">✏</button>
+          <button class="icon-btn" data-a="send-init-pin" data-id="${p.id}" title="Přihlašovací údaje">📧</button>
+          <button class="icon-btn red" data-a="del-patient" data-id="${p.id}" title="Smazat">🗑</button>
+        </div>
+      </div>`).join("")}
+  </div>`;
+}
+
+function buildAdminSettings(){
+  const s=S.settings;
+  const twoCol=!isMobile;
+  return`
+  <div class="s-grid">
+    <div class="s-card">
+      <div class="s-title">Základní informace</div>
+      <div class="field"><label>Jméno lékaře</label>
+        <input type="text" id="s-doc" value="${esc(s.doctorName)}"/></div>
+    </div>
+    <div class="s-card">
+      <div class="s-title">Ordinační hodiny</div>
+      <div class="${twoCol?"s-row-2col":"s-row"}">
+        <div class="field"><label>Začátek</label><input type="time" id="s-ws" value="${s.workStart}"/></div>
+        <div class="field"><label>Konec</label><input type="time" id="s-we" value="${s.workEnd}"/></div>
+        <div class="field"><label>Délka termínu (min)</label>
+          <input type="number" id="s-slot" value="${s.slotMinutes}" min="5" max="240" step="5"/></div>
+        <div class="field"><label>Min. hodin pro změnu pacientem</label>
+          <input type="number" id="s-mch" value="${s.minChangHours||24}" min="0" max="168"/></div>
+      </div>
+      <div class="${twoCol?"s-row-2col":"s-row"} mt12">
+        <div class="field"><label>Přestávka od</label><input type="time" id="s-bs" value="${s.breakStart}"/></div>
+        <div class="field"><label>Přestávka do</label><input type="time" id="s-be" value="${s.breakEnd}"/></div>
+      </div>
+      <div class="field mt12"><label>Pracovní dny</label>
+        <div class="day-row">
+          ${[[1,"Po"],[2,"Út"],[3,"St"],[4,"Čt"],[5,"Pá"],[6,"So"],[0,"Ne"]].map(([v,l])=>
+            `<button class="day-btn ${s.workDays.includes(v)?"on":""}" data-a="tog-day" data-d="${v}">${l}</button>`
+          ).join("")}
+        </div>
+      </div>
+    </div>
+    <div class="s-card">
+      <div class="s-title">Zablokované dny</div>
+      <div class="blocked-chips">
+        ${(s.blockedDates||[]).length===0?`<span class="muted">Žádné zablokované dny</span>`:""}
+        ${(s.blockedDates||[]).map(k=>`
+          <div class="chip">${fmt(parseKey(k))}
+            <button data-a="unblock" data-k="${k}">×</button></div>`).join("")}
+      </div>
+      <div class="add-row">
+        <input type="date" id="s-bd"/>
+        <button class="btn btn-secondary btn-sm" data-a="add-block">+ Přidat</button>
+      </div>
+    </div>
+    <button class="btn btn-primary ${isMobile?"btn-full btn-lg":""}" data-a="save-settings">
+      💾 Uložit nastavení
+    </button>
+  </div>`;
+}
+
+/* ════════════════════════════
+   MODALS
+════════════════════════════ */
+function buildModal(){
+  const m=S.modal;
+  if(m.type==="appt")return buildApptModal();
+  if(m.type==="add-patient")return buildAddPatientModal();
+  if(m.type==="edit-patient")return buildEditPatientModal();
+  if(m.type==="confirm")return buildConfirmModal();
+  return"";
+}
+function buildApptModal(){
+  const a=S.modal.data||{};
+  const isNew=!a.id;
+  const ts=a.start?`${a.start.getFullYear()}-${pad(a.start.getMonth()+1)}-${pad(a.start.getDate())}T${pad(a.start.getHours())}:${pad(a.start.getMinutes())}`:"";
+  const patOpts=S.patients.map(p=>`<option value="${p.id}" ${a.patientId===p.id?"selected":""}>${esc(p.name)} (@${esc(p.username)})</option>`).join("");
+  return`
+  <div class="overlay" data-a="close-modal">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-hd"><h3>${isNew?"Nová objednávka":"Upravit objednávku"}</h3>
+        <button class="icon-btn" data-a="close-modal">✕</button></div>
+      <div class="modal-bd">
+        <div class="field"><label>Pacient</label>
+          <select id="m-pat"><option value="">— Vyberte nebo vyplňte ručně —</option>${patOpts}</select></div>
+        <div class="field"><label>Celé jméno *</label>
+          <input type="text" id="m-name" value="${esc(a.name||"")}" placeholder="Jan Novák"/></div>
+        <div class="field"><label>Telefon</label>
+          <input type="tel" id="m-phone" value="${esc(a.phone||"")}"/></div>
+        <div class="field"><label>E-mail</label>
+          <input type="email" id="m-email" value="${esc(a.email||"")}"/></div>
+        <div class="field"><label>Datum a čas *</label>
+          <input type="datetime-local" id="m-start" value="${ts}"/></div>
+        <div class="field"><label>Délka (min)</label>
+          <input type="number" id="m-dur" value="${a.duration||S.settings.slotMinutes}" min="5" step="5"/></div>
+        <div class="field"><label>Důvod návštěvy</label>
+          <textarea id="m-reason" rows="2">${esc(a.reason||"")}</textarea></div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn btn-secondary" data-a="close-modal">Zrušit</button>
+        <button class="btn btn-primary" data-a="save-appt" data-id="${a.id||""}">${isNew?"Vytvořit":"Uložit"}</button>
+      </div>
+    </div>
+  </div>`;
+}
+function buildAddPatientModal(){
+  return`
+  <div class="overlay" data-a="close-modal">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-hd"><h3>Nový pacient</h3>
+        <button class="icon-btn" data-a="close-modal">✕</button></div>
+      <div class="modal-bd">
+        <div class="field"><label>Celé jméno *</label>
+          <input type="text" id="np-name" placeholder="Jana Nováková"/></div>
+        <div class="field"><label>Uživatelské jméno (příjmení) *</label>
+          <input type="text" id="np-user" placeholder="Nováková"/></div>
+        <div class="field"><label>PIN (min. 4 znaky) *</label>
+          <input type="password" id="np-pin" maxlength="8" placeholder="••••"/></div>
+        <div class="field"><label>Telefon</label>
+          <input type="tel" id="np-phone" placeholder="+420 777 000 000"/></div>
+        <div class="field"><label>E-mail</label>
+          <input type="email" id="np-email"/></div>
+        <div class="field"><label>Datum narození</label>
+          <input type="date" id="np-dob"/></div>
+        <div class="info-box">💡 Po vytvoření stiskněte 📧 pro zobrazení přihlašovacích údajů.</div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn btn-secondary" data-a="close-modal">Zrušit</button>
+        <button class="btn btn-primary" data-a="save-new-patient">Vytvořit účet</button>
+      </div>
+    </div>
+  </div>`;
+}
+function buildEditPatientModal(){
+  const p=S.modal.data;
+  return`
+  <div class="overlay" data-a="close-modal">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-hd"><h3>Upravit pacienta</h3>
+        <button class="icon-btn" data-a="close-modal">✕</button></div>
+      <div class="modal-bd">
+        <div class="field"><label>Celé jméno *</label>
+          <input type="text" id="ep-name" value="${esc(p.name||"")}"/></div>
+        <div class="field"><label>Telefon</label>
+          <input type="tel" id="ep-phone" value="${esc(p.phone||"")}"/></div>
+        <div class="field"><label>E-mail</label>
+          <input type="email" id="ep-email" value="${esc(p.email||"")}"/></div>
+        <div class="field"><label>Nový PIN (ponechte prázdné)</label>
+          <input type="password" id="ep-pin" maxlength="8" placeholder="Nový PIN…"/></div>
+      </div>
+      <div class="modal-ft">
+        <button class="btn btn-secondary" data-a="close-modal">Zrušit</button>
+        <button class="btn btn-primary" data-a="save-edit-patient" data-id="${p.id}">Uložit</button>
+      </div>
+    </div>
+  </div>`;
+}
+function buildConfirmModal(){
+  const m=S.modal;
+  return`
+  <div class="overlay">
+    <div class="modal" style="max-width:380px;" onclick="event.stopPropagation()">
+      <div class="modal-hd"><h3>${esc(m.title||"Potvrdit")}</h3></div>
+      <div class="modal-bd"><p style="color:var(--ink2);font-size:15px;">${esc(m.message||"")}</p></div>
+      <div class="modal-ft">
+        <button class="btn btn-secondary" data-a="close-modal">Zrušit</button>
+        <button class="btn btn-danger" data-a="confirm-ok">Potvrdit</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ════════════════════════════
+   EVENT WIRING
+════════════════════════════ */
+function onClick(e){
+  const el=e.target.closest("[data-a]");
+  if(el){e.stopPropagation();handle(el.dataset.a,el.dataset);}
+}
+function onInput(e){
+  if(e.target.id==="pat-search"){S.patSearch=e.target.value;render();}
+}
+function onKey(e){
+  if(e.key==="Enter"&&(e.target.id==="l-pin"||e.target.id==="l-user"))handle("login",{});
+}
+
+/* ════════════════════════════
+   ACTIONS
+════════════════════════════ */
+async function handle(a,d={}){
+  if(a==="ltab"){S.loginTab=d.v;S.loginErr="";render();}
+  else if(a==="login")await doLogin();
+  else if(a==="logout"){S.role=null;S.patientId=null;S.patientData=null;render();}
+  else if(a==="atab"){S.adminTab=d.v;render();}
+  else if(a==="ptab"){S.portalTab=d.v;render();}
+  else if(a==="cal-prev"){S.calOffset--;render();}
+  else if(a==="cal-next"){S.calOffset++;render();}
+  else if(a==="cal-today"){S.calOffset=0;render();}
+  else if(a==="lfilt"){S.listFilter=d.v;render();}
+  else if(a==="hfilt"){S.histFilter=d.v;render();}
+  else if(a==="bmo-prev"){if(S.bookMonthOff>0){S.bookMonthOff--;S.bookDate=null;S.bookTime=null;render();}}
+  else if(a==="bmo-next"){S.bookMonthOff++;S.bookDate=null;S.bookTime=null;render();}
+  else if(a==="pick-bdate"){S.bookDate=new Date(parseInt(d.date));S.bookTime=null;render();}
+  else if(a==="pick-slot"){S.bookTime=new Date(parseInt(d.ts));render();}
+  else if(a==="book-next"){S.bookStep=2;render();}
+  else if(a==="book-back"){S.bookStep=1;render();}
+  else if(a==="cancel-reschedule"){S.rescheduleId=null;S.bookStep=1;render();}
+  else if(a==="book-confirm")await doBookConfirm();
+  else if(a==="reschedule"){S.rescheduleId=d.id;S.portalTab="book";S.bookStep=1;S.bookDate=null;S.bookTime=null;render();}
+  else if(a==="pat-cancel"){
+    S.modal={type:"confirm",title:"Zrušit objednávku",message:"Opravdu chcete zrušit tuto objednávku?",
+      onOk:()=>updateAppt(d.id,{status:"cancelled"})};render();
+  }
+  else if(a==="open-adm-appt"){
+    const ex=d.id?S.appointments.find(x=>x.id===d.id):null;
+    S.modal={type:"appt",data:ex||(d.ts?{start:new Date(parseInt(d.ts))}:{})};render();
+  }
+  else if(a==="cell"){S.modal={type:"appt",data:{start:new Date(parseInt(d.ts))}};render();}
+  else if(a==="save-appt")await doSaveAppt(d.id);
+  else if(a==="adm-cancel"){
+    S.modal={type:"confirm",title:"Zrušit objednávku",message:"Zrušit tuto objednávku?",
+      onOk:()=>updateAppt(d.id,{status:"cancelled"})};render();
+  }
+  else if(a==="adm-delete"){
+    S.modal={type:"confirm",title:"Smazat objednávku",message:"Trvale smazat tuto objednávku?",
+      onOk:()=>deleteAppt(d.id)};render();
+  }
+  else if(a==="open-add-patient"){S.modal={type:"add-patient"};render();}
+  else if(a==="open-edit-patient"){
+    const p=S.patients.find(x=>x.id===d.id);
+    if(p){S.modal={type:"edit-patient",data:p};render();}
+  }
+  else if(a==="save-new-patient")await doSaveNewPatient();
+  else if(a==="save-edit-patient")await doSaveEditPatient(d.id);
+  else if(a==="del-patient"){
+    S.modal={type:"confirm",title:"Smazat pacienta",message:"Trvale smazat tohoto pacienta?",
+      onOk:()=>deletePatient(d.id)};render();
+  }
+  else if(a==="send-init-pin"){
+    const p=S.patients.find(x=>x.id===d.id);
+    if(p)alert(`Přihlašovací údaje pro ${p.name}:\n\nUživ. jméno: ${p.username}\n\nPIN sdělte pacientovi osobně.`);
+  }
+  else if(a==="tog-day"){
+    const day=parseInt(d.d);
+    S.settings.workDays=S.settings.workDays.includes(day)
+      ?S.settings.workDays.filter(x=>x!==day):[...S.settings.workDays,day];render();
+  }
+  else if(a==="add-block"){
+    const v=document.getElementById("s-bd")?.value;
+    if(v&&!(S.settings.blockedDates||[]).includes(v)){S.settings.blockedDates=[...(S.settings.blockedDates||[]),v];render();}
+  }
+  else if(a==="unblock"){S.settings.blockedDates=(S.settings.blockedDates||[]).filter(k=>k!==d.k);render();}
+  else if(a==="save-settings")await doSaveSettings();
+  else if(a==="close-modal"){S.modal=null;render();}
+  else if(a==="confirm-ok"){if(S.modal?.onOk)await S.modal.onOk();S.modal=null;render();}
+}
+
+/* ════════════════════════════
+   ASYNC HANDLERS
+════════════════════════════ */
+async function doLogin(){
+  S.loginLoading=true;S.loginErr="";render();
+  try{
+    if(S.loginTab==="admin"){
+      const pin=document.getElementById("l-pin")?.value||"";
+      if(pin===ADMIN_PIN)S.role="admin";
+      else S.loginErr="Nesprávný PIN";
+    }else{
+      const user=(document.getElementById("l-user")?.value||"").trim();
+      const pin=document.getElementById("l-pin")?.value||"";
+      if(!user||!pin){S.loginErr="Zadejte uživatelské jméno a PIN";S.loginLoading=false;render();return;}
+      const snap=await getDoc(doc(db,"patients",user));
+      if(!snap.exists()){S.loginErr="Pacient nenalezen";S.loginLoading=false;render();return;}
+      const data=snap.data();
+      if(data.pinHash!==hashPin(pin)){S.loginErr="Nesprávný PIN";S.loginLoading=false;render();return;}
+      S.role="patient";S.patientId=user;S.patientData={...data,id:user};
+    }
+  }catch(e){S.loginErr="Chyba: "+e.message;}
+  S.loginLoading=false;render();
+}
+
+async function doBookConfirm(){
+  const reason=document.getElementById("b-reason")?.value?.trim()||"";
+  S.bookReason=reason;
+  const p=S.patientData;
+  if(S.rescheduleId){
+    await updateAppt(S.rescheduleId,{status:"cancelled",cancelledReason:"Přesunuto pacientem"});
+    S.rescheduleId=null;
+  }
+  await addAppt({
+    patientId:S.patientId,name:p.name,phone:p.phone||"",email:p.email||"",
+    reason,start:S.bookTime,duration:S.settings.slotMinutes,
+    status:"confirmed",createdAt:Timestamp.now(),
+  });
+  S.bookStep=1;S.bookDate=null;S.bookTime=null;S.bookReason="";
+  S.portalTab="history";S.histFilter="upcoming";render();
+}
+
+async function doSaveAppt(id){
+  const name=document.getElementById("m-name")?.value?.trim()||"";
+  const phone=document.getElementById("m-phone")?.value?.trim()||"";
+  const email=document.getElementById("m-email")?.value?.trim()||"";
+  const startVal=document.getElementById("m-start")?.value||"";
+  const dur=parseInt(document.getElementById("m-dur")?.value||S.settings.slotMinutes);
+  const reason=document.getElementById("m-reason")?.value?.trim()||"";
+  const patId=document.getElementById("m-pat")?.value||"";
+  if(!name||!startVal){toast("Vyplňte povinná pole","error");return;}
+  const start=new Date(startVal);
+  const pd=patId?S.patients.find(p=>p.id===patId):null;
+  const apptData={name:pd?pd.name:name,phone:pd?pd.phone||phone:phone,email:pd?pd.email||email:email,patientId:patId||null,reason,start,duration:dur,status:"confirmed"};
+  if(id)await updateAppt(id,apptData);else await addAppt(apptData);
+  S.modal=null;render();
+}
+
+async function doSaveNewPatient(){
+  const name=document.getElementById("np-name")?.value?.trim()||"";
+  const user=document.getElementById("np-user")?.value?.trim()||"";
+  const pin=document.getElementById("np-pin")?.value||"";
+  const phone=document.getElementById("np-phone")?.value?.trim()||"";
+  const email=document.getElementById("np-email")?.value?.trim()||"";
+  const dob=document.getElementById("np-dob")?.value||"";
+  if(!name||!user||!pin){toast("Vyplňte povinná pole","error");return;}
+  if(pin.length<4){toast("PIN musí mít alespoň 4 znaky","error");return;}
+  const ok=await addPatient({name,username:user,pin,phone,email,dob,createdAt:Timestamp.now()});
+  if(ok){S.modal=null;render();}
+}
+
+async function doSaveEditPatient(id){
+  const name=document.getElementById("ep-name")?.value?.trim()||"";
+  const phone=document.getElementById("ep-phone")?.value?.trim()||"";
+  const email=document.getElementById("ep-email")?.value?.trim()||"";
+  const pin=document.getElementById("ep-pin")?.value||"";
+  if(!name){toast("Zadejte jméno","error");return;}
+  const upd={name,phone,email};
+  if(pin){if(pin.length<4){toast("PIN musí mít alespoň 4 znaky","error");return;}upd.pin=pin;}
+  await updatePatient(id,upd);S.modal=null;render();
+}
+
+async function doSaveSettings(){
+  S.settings.doctorName=document.getElementById("s-doc")?.value||S.settings.doctorName;
+  S.settings.workStart=document.getElementById("s-ws")?.value||S.settings.workStart;
+  S.settings.workEnd=document.getElementById("s-we")?.value||S.settings.workEnd;
+  S.settings.breakStart=document.getElementById("s-bs")?.value||S.settings.breakStart;
+  S.settings.breakEnd=document.getElementById("s-be")?.value||S.settings.breakEnd;
+  S.settings.slotMinutes=parseInt(document.getElementById("s-slot")?.value)||S.settings.slotMinutes;
+  S.settings.minChangHours=parseInt(document.getElementById("s-mch")?.value)??S.settings.minChangHours;
+  await saveSettings();render();
+}
+
+/* ════════════════════════════
+   INIT
+════════════════════════════ */
+(async()=>{
+  await loadSettings();
+  subscribeAppointments();
+  subscribePatients();
+  render();
+})();
+</script>
+</body>
+</html>
